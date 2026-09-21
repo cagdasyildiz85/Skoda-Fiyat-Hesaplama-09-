@@ -112,6 +112,7 @@
   button{
     font-family:inherit;
     cursor:pointer;
+    touch-action:manipulation;
   }
   .btn{
     border:none;
@@ -487,6 +488,7 @@
     padding:0;
     border-radius:10px;
     display:flex; align-items:center; justify-content:center;
+    touch-action:manipulation;
   }
   .step-btn:active{ background:var(--paper-2); }
   .step-btn svg{
@@ -838,6 +840,7 @@
     <div class="modal-body">
 
       <div id="creditStep1">
+        <div id="campaignCreditSlot"></div>
         <div class="hint" style="margin-bottom:14px;">Müşteri Tipini Seçin — Kredi Oranı, Vade Sınırı ve Vergi Katsayısı Buna Göre Belirlenir.</div>
         <button class="type-btn" onclick="selectCreditType('bireysel')">
           Bireysel Müşteri
@@ -1335,6 +1338,13 @@ function submitCompare(){
   document.getElementById('compareSection').style.display = 'block';
   document.getElementById('compareSection').scrollIntoView({behavior:'smooth', block:'start'});
 }
+const CAMPAIGN_CREDIT = {
+  'Kamiq Premium 1.0 TSI 115 PS DSG': {
+    amount: 200000, ay: 12, faiz: 0.99, tipKey: 'bireysel',
+    label: 'Kampanyalı Bireysel Kredi — Kamiq Premium 1.0 TSI 115 PS DSG'
+  }
+};
+
 const CREDIT_TYPES = {
   'bireysel': {
     label: 'Bireysel Müşteri',
@@ -1362,7 +1372,7 @@ const CREDIT_TYPES = {
   }
 };
 
-let creditState = { type: null, faiz: 3.50, tutar: 0, vade: 12 };
+let creditState = { type: null, faiz: 3.50, tutar: 0, vade: 12, isCampaign: false };
 let lastCreditResult = null;
 
 function creditBase(){
@@ -1408,6 +1418,25 @@ function openCreditModal(){
   if(!state.model){ return; }
   document.getElementById('creditStep1').style.display = '';
   document.getElementById('creditStep2').style.display = 'none';
+
+  const slot = document.getElementById('campaignCreditSlot');
+  const camp = CAMPAIGN_CREDIT[state.model.name];
+  const base = creditBase();
+  if(camp && base < 2000000){
+    slot.innerHTML = `
+      <button class="type-btn" onclick="selectCampaignCredit()" style="background:var(--forest-950); border-color:var(--navy);">
+        <span style="color:var(--lime-500);">🎉 Kampanyalı Krediyi Hesapla</span>
+        <span class="sub" style="color:#c9e8d8;">${fmtTL(camp.amount)} · ${camp.ay} Ay · %${camp.faiz.toFixed(2)} Aylık Faiz</span>
+      </button>
+    `;
+  } else if(camp){
+    slot.innerHTML = `
+      <div class="hint" style="margin-bottom:14px; color:var(--amber); font-weight:700;">⚠ Bu Araç 2.000.000 ₺'yi Aştığı İçin Bireysel Kredi Kampanyası (Dahil Kampanyalı Kredi) Uygulanamaz.</div>
+    `;
+  } else {
+    slot.innerHTML = '';
+  }
+
   openModal('creditOverlay');
 }
 
@@ -1472,10 +1501,42 @@ function bindCreditSwipe(){
   }, {passive:true});
 }
 
+function selectCampaignCredit(){
+  const camp = CAMPAIGN_CREDIT[state.model.name];
+  if(!camp) return;
+  document.getElementById('creditOverLimitWarning').style.display = 'none';
+  const base = creditBase();
+  const t = CREDIT_TYPES[camp.tipKey];
+
+  creditState.type = camp.tipKey;
+  creditState.tutar = camp.amount;
+  creditState.vade = camp.ay;
+  creditState.faiz = camp.faiz;
+  creditState.isCampaign = true;
+
+  document.getElementById('creditTypeLabel').textContent = camp.label;
+  document.getElementById('creditTypeRule').textContent = t.vergi + ' — Kampanya Şartları Sabittir';
+  document.getElementById('creditBaseAmount').textContent = fmtTL(base);
+  document.getElementById('creditFaizInput').value = camp.faiz.toFixed(2);
+  document.getElementById('creditTutarInput').value = camp.amount.toLocaleString('tr-TR');
+
+  const vadeSel = document.getElementById('creditVade');
+  vadeSel.innerHTML = `<option value="${camp.ay}">${camp.ay} Ay</option>`;
+  vadeSel.value = camp.ay;
+  document.getElementById('creditVadeHint').textContent = 'Kampanya Vadesi Sabittir: ' + camp.ay + ' Ay.';
+  document.getElementById('creditTutarHint').textContent = 'Kampanya Kredi Tutarı Sabittir: ' + fmtTL(camp.amount) + '.';
+
+  document.getElementById('creditStep1').style.display = 'none';
+  document.getElementById('creditStep2').style.display = '';
+  bindCreditSwipe();
+  renderCredit();
+}
+
 function selectCreditType(typeKey){
   const base = creditBase();
   const t = CREDIT_TYPES[typeKey];
   const lim = creditLimits(typeKey, base);
+  creditState.isCampaign = false;
   creditState.type = typeKey;
   creditState.tutar = Math.round(lim.maxTutar);
   creditState.vade = lim.vadeler.length ? lim.vadeler[lim.vadeler.length-1] : 0;
@@ -1498,6 +1559,26 @@ function selectCreditType(typeKey){
   renderCredit();
 }
 
+function creditTutarMax(){
+  if(creditState.isCampaign){
+    const camp = CAMPAIGN_CREDIT[state.model.name];
+    return camp ? camp.amount : creditBase();
+  }
+  return creditBase();
+}
+
+function checkCampaignOverLimit(attemptedV){
+  const warnEl = document.getElementById('creditOverLimitWarning');
+  if(!creditState.isCampaign) return;
+  const camp = CAMPAIGN_CREDIT[state.model.name];
+  if(camp && attemptedV > camp.amount){
+    warnEl.style.display = 'block';
+    warnEl.textContent = '⚠ Kampanyalı Kredi Tutarı Aşıldı — Standart Krediyi Müşteri Tipi Seçerek Manuel Hesaplayın.';
+  } else {
+    warnEl.style.display = 'none';
+  }
+}
+
 function stepCredit(which, delta){
   if(which === 'faiz'){
     let v = (parseFloat(document.getElementById('creditFaizInput').value.replace(',', '.')) || 0) + delta;
@@ -1506,8 +1587,9 @@ function stepCredit(which, delta){
   } else {
     const raw = document.getElementById('creditTutarInput').value.replace(/\./g, '').replace(/[^\d]/g, '');
     let v = (parseInt(raw, 10) || 0) + delta;
-    const base = creditBase();
-    v = Math.max(0, Math.min(v, Math.round(base)));
+    checkCampaignOverLimit(v);
+    const maxV = creditTutarMax();
+    v = Math.max(0, Math.min(v, Math.round(maxV)));
     document.getElementById('creditTutarInput').value = v.toLocaleString('tr-TR');
   }
   renderCredit();
@@ -1520,8 +1602,9 @@ function manualCredit(){
 
   const raw = document.getElementById('creditTutarInput').value.replace(/\./g, '').replace(/[^\d]/g, '');
   let t = parseInt(raw, 10) || 0;
-  const base = creditBase();
-  t = Math.max(0, Math.min(t, Math.round(base)));
+  checkCampaignOverLimit(t);
+  const maxV = creditTutarMax();
+  t = Math.max(0, Math.min(t, Math.round(maxV)));
   document.getElementById('creditTutarInput').value = t.toLocaleString('tr-TR');
   renderCredit();
 }
@@ -1531,6 +1614,7 @@ function renderCredit(){
   const t = CREDIT_TYPES[creditState.type];
   const lim = creditLimits(creditState.type, base);
   const out = document.getElementById('creditResult');
+  const isCampaign = creditState.isCampaign;
 
   if(lim.kapali){
     out.innerHTML = `<div style="background:#fdf0e0; border-left:3px solid var(--amber); padding:12px 14px; font-size:13px; color:#7a4a12; margin:16px 0;">⚠ ${lim.note}</div>`;
@@ -1543,7 +1627,9 @@ function renderCredit(){
   const n = parseInt(document.getElementById('creditVade').value, 10) || 0;
 
   const warnEl = document.getElementById('creditOverLimitWarning');
-  if(P > lim.maxTutar + 0.5){
+  if(isCampaign){
+    // Kampanya modunda uyarı checkCampaignOverLimit() tarafından yönetiliyor, burada dokunulmuyor.
+  } else if(P > lim.maxTutar + 0.5){
     warnEl.style.display = 'block';
     warnEl.textContent = '⚠ Bu Tutar, ' + t.label + ' İçin Tipik Azami Kredi Tutarını (' + fmtTL(lim.maxTutar) + ') Aşıyor — Bankanın Onayına Bağlıdır.';
   } else {
