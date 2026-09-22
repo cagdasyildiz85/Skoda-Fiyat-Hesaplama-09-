@@ -368,6 +368,7 @@
     justify-content:center;
     padding:5vh 16px;
     overflow-y:auto;
+    overscroll-behavior:contain;
   }
   .overlay.show{ display:flex; }
   .modal{
@@ -377,6 +378,7 @@
     border-top:4px solid var(--lime-500);
     box-shadow:0 20px 60px rgba(0,0,0,0.35);
     animation:pop .18s ease;
+    overscroll-behavior:contain;
   }
   @keyframes pop{
     from{ opacity:0; transform:translateY(8px); }
@@ -426,6 +428,7 @@
   .model-list{
     max-height:52vh;
     overflow-y:auto;
+    overscroll-behavior:contain;
     border:1px solid var(--line);
     background:var(--white);
   }
@@ -771,14 +774,14 @@
             <svg viewBox="0 0 24 24" width="18" height="18"><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
           <div class="step-value-box">
-            <input type="text" inputmode="decimal" class="step-input" id="kamuInput" value="1.0" onchange="manualParam('kamu')">
+            <input type="text" inputmode="decimal" class="step-input" id="kamuInput" value="1.0" onchange="manualParam('kamu')" onfocus="this.select()">
             <span class="step-pct">%</span>
           </div>
           <button type="button" class="step-btn" onclick="stepParam('kamu',0.1)" aria-label="Artır">
             <svg viewBox="0 0 24 24" width="18" height="18"><line x1="5" y1="12" x2="19" y2="12"/><line x1="12" y1="5" x2="12" y2="19"/></svg>
           </button>
         </div>
-        <input type="range" id="kamuRange" min="0" max="10" step="0.1" value="1" oninput="syncParamInputs('kamu')" style="margin-top:10px;">
+        <input type="range" id="kamuRange" min="0" max="10" step="0.1" value="1" oninput="onRangeDrag('kamu')" style="margin-top:10px;">
         <div class="hint">Fatura Bedeli Üzerinden Uygulanan Kamu/Daimi Müşteri İndirimi.</div>
       </div>
 
@@ -789,14 +792,14 @@
             <svg viewBox="0 0 24 24" width="18" height="18"><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
           <div class="step-value-box">
-            <input type="text" inputmode="decimal" class="step-input" id="bayiInput" value="1.5" onchange="manualParam('bayi')">
+            <input type="text" inputmode="decimal" class="step-input" id="bayiInput" value="1.5" onchange="manualParam('bayi')" onfocus="this.select()">
             <span class="step-pct">%</span>
           </div>
           <button type="button" class="step-btn" onclick="stepParam('bayi',0.1)" aria-label="Artır">
             <svg viewBox="0 0 24 24" width="18" height="18"><line x1="5" y1="12" x2="19" y2="12"/><line x1="12" y1="5" x2="12" y2="19"/></svg>
           </button>
         </div>
-        <input type="range" id="bayiRange" min="0" max="10" step="0.1" value="1.5" oninput="syncParamInputs('bayi')" style="margin-top:10px;">
+        <input type="range" id="bayiRange" min="0" max="10" step="0.1" value="1.5" oninput="onRangeDrag('bayi')" style="margin-top:10px;">
         <div class="hint">ÖTV Matrahı (Fatura Bedelinin %90'ı) Üzerinden Bayi Tarafından Sağlanan Ek İndirim.</div>
       </div>
 
@@ -807,21 +810,21 @@
             <svg viewBox="0 0 24 24" width="18" height="18"><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
           <div class="step-value-box">
-            <input type="text" inputmode="decimal" class="step-input" id="kampInput" value="0.0" onchange="manualParam('kamp')">
+            <input type="text" inputmode="decimal" class="step-input" id="kampInput" value="0.0" onchange="manualParam('kamp')" onfocus="this.select()">
             <span class="step-pct">%</span>
           </div>
           <button type="button" class="step-btn" onclick="stepParam('kamp',0.1)" aria-label="Artır">
             <svg viewBox="0 0 24 24" width="18" height="18"><line x1="5" y1="12" x2="19" y2="12"/><line x1="12" y1="5" x2="12" y2="19"/></svg>
           </button>
         </div>
-        <input type="range" id="kampRange" min="0" max="20" step="0.1" value="0" oninput="syncParamInputs('kamp')" style="margin-top:10px;">
+        <input type="range" id="kampRange" min="0" max="20" step="0.1" value="0" oninput="onRangeDrag('kamp')" style="margin-top:10px;">
         <div class="hint">DS Fatura Tarihi'ne Göre Otomatik Dolduruldu — Gerekirse Elle Güncelleyin.</div>
       </div>
 
       <div id="tabanWarning" style="display:none; background:#fdf0e0; border-left:3px solid var(--amber); padding:10px 14px; font-size:12.5px; color:#7a4a12; margin-bottom:12px;">
         ⚠ Kampanya + Kamu/Daimi Toplamı %10'u Geçti. ÖTV, Gerçek İndirimli Tutar Yerine Fatura Bedelinin %90'lık Taban Matrahından Hesaplanacak.
         <label style="display:flex; align-items:flex-start; gap:8px; margin-top:10px; font-weight:700; cursor:pointer;">
-          <input type="checkbox" id="matrahDestegi" onchange="syncParamInputs('kamp')" style="margin-top:2px;">
+          <input type="checkbox" id="matrahDestegi" onchange="updateParamDisplay('kamp')" style="margin-top:2px;">
           <span>Matrah Desteği Geçerli (Yüce Auto Onaylı — Otomatik Kampanya / Nefaset / Mikro Filo İndirimi Nedeniyle Oluşan Matrah Farkını Yüce Auto Karşılıyor). İşaretlerseniz ÖTV, %90 Taban Yerine Gerçek İndirimli Tutardan Hesaplanır.</span>
         </label>
       </div>
@@ -1039,8 +1042,32 @@ function seriesOf(name){
   return name.split(' ')[0];
 }
 
-function openModal(id){ document.getElementById(id).classList.add('show'); }
-function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+let modalLockCount = 0;
+let savedScrollY = 0;
+function lockBodyScroll(){
+  if(modalLockCount === 0){
+    savedScrollY = window.scrollY || window.pageYOffset || 0;
+    document.body.style.position = 'fixed';
+    document.body.style.top = '-' + savedScrollY + 'px';
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    document.body.style.width = '100%';
+  }
+  modalLockCount++;
+}
+function unlockBodyScroll(){
+  modalLockCount = Math.max(0, modalLockCount - 1);
+  if(modalLockCount === 0){
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+    document.body.style.right = '';
+    document.body.style.width = '';
+    window.scrollTo(0, savedScrollY);
+  }
+}
+function openModal(id){ document.getElementById(id).classList.add('show'); lockBodyScroll(); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); unlockBodyScroll(); }
 
 function openModelModal(){
   document.getElementById('searchInput').value = '';
@@ -1143,19 +1170,21 @@ function updateVehicleBar(){
   document.getElementById('compareSection').style.display = 'none';
 }
 
+let paramValues = { kamu: 1.0, bayi: 1.5, kamp: 0.0 };
+
 function openParamModal(){
   const isCustom = state.model && state.model.custom;
   document.getElementById('tarihField').style.display = isCustom ? 'none' : '';
   if(!isCustom){
     document.getElementById('faturaDonem').value = state.faturaDonem;
   }
-  document.getElementById('kamuRange').value = state.kamu;
-  document.getElementById('bayiRange').value = state.bayi;
-  document.getElementById('kampRange').value = state.kamp;
+  paramValues.kamu = state.kamu;
+  paramValues.bayi = state.bayi;
+  paramValues.kamp = state.kamp;
   document.getElementById('matrahDestegi').checked = state.matrahDestegi;
-  syncParamInputs('kamu');
-  syncParamInputs('bayi');
-  syncParamInputs('kamp');
+  updateParamDisplay('kamu');
+  updateParamDisplay('bayi');
+  updateParamDisplay('kamp');
   openModal('paramOverlay');
 }
 
@@ -1165,8 +1194,8 @@ function onFaturaDonemChange(){
   const fatura = faturaForDonem(state.model.name, state.faturaDonem);
   if(fatura !== null) state.activeFatura = fatura;
   const pct = lookupCampaignPct(state.model.name, state.faturaDonem);
-  document.getElementById('kampRange').value = pct;
-  syncParamInputs('kamp');
+  paramValues.kamp = pct;
+  updateParamDisplay('kamp');
   document.getElementById('vbFatura').textContent = 'DS Fatura: ' + fmtTL(state.activeFatura !== null ? state.activeFatura : state.model.fatura);
 }
 
@@ -1186,45 +1215,41 @@ function clampFine(v, min, max){
   return v;
 }
 function stepParam(which, delta){
-  const rangeEl = document.getElementById(which + 'Range');
   const [min, max] = paramLimits(which);
-  const v = clampRound((parseFloat(rangeEl.value) || 0) + delta, min, max);
-  rangeEl.value = v;
-  syncParamInputs(which);
+  paramValues[which] = clampRound(paramValues[which] + delta, min, max);
+  updateParamDisplay(which);
 }
 function manualParam(which){
   const inputEl = document.getElementById(which + 'Input');
-  const rangeEl = document.getElementById(which + 'Range');
   const [min, max] = paramLimits(which);
   let v = parseFloat(inputEl.value.replace(',', '.'));
-  if(isNaN(v)) v = parseFloat(rangeEl.value) || 0;
-  v = clampFine(v, min, max);
-  rangeEl.value = v;
-  syncParamInputs(which);
+  if(isNaN(v)) v = paramValues[which];
+  paramValues[which] = clampFine(v, min, max);
+  updateParamDisplay(which);
+}
+function onRangeDrag(which){
+  const rangeEl = document.getElementById(which + 'Range');
+  const [min, max] = paramLimits(which);
+  paramValues[which] = clampRound(parseFloat(rangeEl.value) || 0, min, max);
+  updateParamDisplay(which);
 }
 
-function syncParamInputs(which){
-  if(which==='kamu'){
-    const v = parseFloat(document.getElementById('kamuRange').value);
-    document.getElementById('kamuInput').value = v.toFixed(2);
-  }
-  if(which==='bayi'){
-    const v = parseFloat(document.getElementById('bayiRange').value);
-    document.getElementById('bayiInput').value = v.toFixed(2);
-  }
-  if(which==='kamp'){
-    const v = parseFloat(document.getElementById('kampRange').value);
-    document.getElementById('kampInput').value = v.toFixed(2);
-  }
-  const kamu = parseFloat(document.getElementById('kamuRange').value) || 0;
-  const kamp = parseFloat(document.getElementById('kampRange').value) || 0;
+function updateParamDisplay(which){
+  const v = paramValues[which];
+  document.getElementById(which + 'Input').value = v.toFixed(2);
+  document.getElementById(which + 'Range').value = v;
+  const kamu = paramValues.kamu || 0;
+  const kamp = paramValues.kamp || 0;
   document.getElementById('tabanWarning').style.display = (kamu + kamp) > 10 ? 'block' : 'none';
 }
 
 function applyParams(){
-  state.kamu = parseFloat(document.getElementById('kamuRange').value);
-  state.bayi = parseFloat(document.getElementById('bayiRange').value);
-  state.kamp = parseFloat(document.getElementById('kampRange').value);
+  manualParam('kamu');
+  manualParam('bayi');
+  manualParam('kamp');
+  state.kamu = paramValues.kamu;
+  state.bayi = paramValues.bayi;
+  state.kamp = paramValues.kamp;
   state.matrahDestegi = document.getElementById('matrahDestegi').checked;
   closeModal('paramOverlay');
   calculate();
@@ -1395,17 +1420,8 @@ const KART_TAKSIT = [
 
 function cardTutarMax(){ return 50000000; }
 
-function defaultCardAmount(){
-  const m = state.model;
-  if(!m) return 0;
-  const ps = extractPS(m.name);
-  const faturaB = state.activeFatura !== null ? state.activeFatura : m.fatura;
-  const r = computeBreakdown(faturaB, m.cc, m.noter, state.kamp, state.kamu, state.bayi, ps, state.matrahDestegi);
-  return Math.round(r.R);
-}
-
 function openCardModal(){
-  document.getElementById('cardAmountInput').value = defaultCardAmount().toLocaleString('tr-TR');
+  document.getElementById('cardAmountInput').value = (200000).toLocaleString('tr-TR');
   openModal('cardOverlay');
   renderCardTable();
 }
